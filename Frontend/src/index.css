@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+
+.detail-card, .card {
+	background-color: var(--md-sys-color-surface) !important;
+	background: var(--md-sys-color-surface) !important;
+	background-image: none !important;
+	-webkit-backdrop-filter: none !important;
+	backdrop-filter: none !important;
+	opacity: 1 !important;
+}
+
+.card.skeleton{
+	min-height:72px; display:flex; align-items:center; padding:12px; overflow:hidden;
+}
+.card.skeleton .skeleton-row{
+	flex:1; height:48px; border-radius:8px; background:linear-gradient(90deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.04) 100%);
+	background-size:200% 100%; animation: skeleton-shimmer 1.1s linear infinite;
+}
+@keyframes skeleton-shimmer{ from { background-position:200% 0 } to { background-position:-200% 0 } }
+
+
+.a11y--high-contrast-dark .detail-card,
+.a11y--high-contrast-dark .card,
+.a11y--high-contrast-dark .hero-overlap .card,
+.a11y--high-contrast-dark .cards-stage .card,
+html.a11y--high-contrast-dark .detail-card,
+html.a11y--high-contrast-dark .card,
+body.a11y--high-contrast-dark .detail-card,
+body.a11y--high-contrast-dark .card{
+	background-color: var(--md-sys-color-surface) !important;
+	background: var(--md-sys-color-surface) !important;
+	color: var(--md-sys-color-on-surface) !important;
+	border-color: var(--md-sys-color-outline-variant) !important;
+	box-shadow: none !important; 
+}
+
+.a11y--high-contrast-light .detail-card,
+.a11y--high-contrast-light .card,
+.a11y--high-contrast-light .hero-overlap .card,
+.a11y--high-contrast-light .cards-stage .card,
+html.a11y--high-contrast-light .detail-card,
+html.a11y--high-contrast-light .card,
+body.a11y--high-contrast-light .detail-card,
+body.a11y--high-contrast-light .card{
+	background-color: var(--md-sys-color-surface) !important;
+	background: var(--md-sys-color-surface) !important;
+	color: var(--md-sys-color-on-surface) !important;
+	border-color: var(--md-sys-color-outline-variant) !important;
+}
+
+/* RecipeDetails responsive helpers */
+.recipe-summary-media {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	align-items: flex-start;
+}
+.recipe-image {
+	width: 100%;
+	height: auto;
+	object-fit: cover;
+	border-radius: 8px;
+}
+.ingredients-nutrition-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 12px;
+}
+
+@media (min-width: 768px) {
+	.recipe-summary-media {
+		flex-direction: row;
+		align-items: flex-start;
+	}
+	.recipe-image {
+		width: 240px;
+		height: 140px;
+	}
+	.ingredients-nutrition-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
