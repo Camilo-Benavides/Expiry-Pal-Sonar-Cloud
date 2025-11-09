@@ -45,6 +45,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
             projectBaseDir: ./Backend
+            args: >
+                -Dsonar.organization=Camilo-Benavides
+                -Dsonar.projectKey=Expiry-Pal-Sonar-Cloud
 
 
   # Job 2: Análisis del Frontend (React/Vite)
@@ -76,6 +79,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
             projectBaseDir: ./Frontend
+            args: >
+                -Dsonar.organization=Camilo-Benavides
+                -Dsonar.projectKey=Expiry-Pal-Sonar-Cloud
 
   # Job 3: Quality Gate Check
   quality-gate:
