@@ -51,7 +51,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=backend-expiry-pal
+            -Dsonar.projectKey=Expiry-Pal-Sonar-Cloud
             -Dsonar.organization=your-org-key
             -Dsonar.sources=Backend/src
             -Dsonar.tests=Backend/tests
@@ -106,7 +106,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=frontend-expiry-pal
+            -Dsonar.projectKey=Expiry-Pal-Sonar-Cloud
             -Dsonar.organization=your-org-key
             -Dsonar.sources=Frontend/src
             -Dsonar.tests=Frontend/src
