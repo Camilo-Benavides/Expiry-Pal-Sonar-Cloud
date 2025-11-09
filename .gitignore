@@ -194,3 +194,32 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Static Analysis Reports
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+
+# Pylint reports
+pylint-report.json
+pylint-report.txt
+
+# ESLint reports
+eslint-report.json
+
+# Flake8 reports
+.flake8
+
+# SonarQube/SonarCloud
+.sonar/
+.scannerwork/
+
+# Test results
+.pytest_cache/
+.tox/
+junit/
+test-results/

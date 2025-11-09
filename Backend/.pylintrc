@@ -1,0 +1,44 @@
+[MASTER]
+# Configuración de Pylint para análisis de código Python
+
+# Archivos y directorios a ignorar
+ignore=venv,env,__pycache__,.git,htmlcov,node_modules
+
+# Usar múltiples procesos para acelerar el análisis
+jobs=4
+
+[MESSAGES CONTROL]
+# Deshabilitar algunos mensajes específicos si es necesario
+# disable=C0111,C0103,R0903
+
+# Longitud máxima de línea
+max-line-length=120
+
+[FORMAT]
+# Indentación esperada
+indent-string='    '
+
+# Número máximo de caracteres en una línea
+max-line-length=120
+
+[DESIGN]
+# Número máximo de argumentos para funciones
+max-args=10
+
+# Número máximo de atributos en una clase
+max-attributes=15
+
+# Número máximo de ramas en una función
+max-branches=15
+
+[BASIC]
+# Convenciones de nombres
+good-names=i,j,k,ex,Run,_,id,db,app
+
+[SIMILARITIES]
+# Número mínimo de líneas similares para reportar duplicación
+min-similarity-lines=6
+
+[REPORTS]
+# Formato de salida
+output-format=json
