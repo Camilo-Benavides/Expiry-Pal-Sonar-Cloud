@@ -46,7 +46,7 @@ jobs:
         with:
             projectBaseDir: ./Backend
             args: >
-                -Dsonar.organization=Camilo-Benavides
+                -Dsonar.organization=integrationsonar
                 -Dsonar.projectKey=Camilo-Benavides_Expiry-Pal-Sonar-Cloud
 
 
@@ -80,7 +80,7 @@ jobs:
         with:
             projectBaseDir: ./Frontend
             args: >
-                -Dsonar.organization=Camilo-Benavides
+                -Dsonar.organization=integrationsonar
                 -Dsonar.projectKey=Camilo-Benavides_Expiry-Pal-Sonar-Cloud
 
   # Job 3: Quality Gate Check
