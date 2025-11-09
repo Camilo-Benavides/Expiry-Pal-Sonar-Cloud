@@ -38,12 +38,6 @@ jobs:
           pytest --cov=src --cov-report=xml --cov-report=html || true
         continue-on-error: true
 
-      - name: Run Pylint
-        working-directory: ./Backend
-        run: |
-          pylint src/ --output-format=json > pylint-report.json || true
-        continue-on-error: true
-
       - name: SonarCloud Scan - Backend
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -52,11 +46,6 @@ jobs:
         with:
             projectBaseDir: ./Backend
 
-      - name: Upload Backend coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: Backend/coverage.xml
 
   # Job 2: Análisis del Frontend (React/Vite)
   frontend-analysis:
@@ -80,18 +69,6 @@ jobs:
         working-directory: ./Frontend
         run: npm ci
 
-      - name: Run ESLint
-        working-directory: ./Frontend
-        run: |
-          npm run lint -- --format json --output-file eslint-report.json || true
-        continue-on-error: true
-
-      - name: Run Frontend tests with coverage
-        working-directory: ./Frontend
-        run: |
-          npm test -- --coverage --watchAll=false || true
-        continue-on-error: true
-
       - name: SonarCloud Scan - Frontend
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -99,12 +76,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
             projectBaseDir: ./Frontend
-
-      - name: Upload Frontend coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-coverage
-          path: Frontend/coverage/
 
   # Job 3: Quality Gate Check
   quality-gate:
@@ -127,15 +98,3 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: coverage-reports
-
-      - name: Comment PR with results
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'Static code analysis completed! Check SonarCloud for detailed results.'
-            })
