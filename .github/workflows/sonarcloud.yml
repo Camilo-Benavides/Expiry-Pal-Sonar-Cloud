@@ -50,14 +50,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          args: >
-            -Dsonar.projectKey=Expiry-Pal-Sonar-Cloud
-            -Dsonar.organization=your-org-key
-            -Dsonar.sources=Backend/src
-            -Dsonar.tests=Backend/tests
-            -Dsonar.python.coverage.reportPaths=Backend/coverage.xml
-            -Dsonar.python.version=3.11
-            -Dsonar.sourceEncoding=UTF-8
+            projectBaseDir: ./Backend
 
       - name: Upload Backend coverage
         uses: actions/upload-artifact@v4
@@ -105,14 +98,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          args: >
-            -Dsonar.projectKey=Expiry-Pal-Sonar-Cloud
-            -Dsonar.organization=your-org-key
-            -Dsonar.sources=Frontend/src
-            -Dsonar.tests=Frontend/src
-            -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx
-            -Dsonar.javascript.lcov.reportPaths=Frontend/coverage/lcov.info
-            -Dsonar.sourceEncoding=UTF-8
+            projectBaseDir: ./Frontend
 
       - name: Upload Frontend coverage
         uses: actions/upload-artifact@v4
