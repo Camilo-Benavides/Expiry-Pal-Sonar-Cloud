@@ -1,0 +1,52 @@
+// Mock product data used by Fridge and ProductDetails pages
+export const mockProducts = [
+  { id: 'p1',  name: 'Fresh Strawberries', image: 'https://picsum.photos/id/1080/800/600', expires: '2025-11-02', quantity: 12, notes: 'Organic, keep refrigerated', category: 'Fruits', owner: 'me', isCommunity: false },
+  { id: 'p2',  name: 'Greek Yogurt', image: 'https://picsum.photos/id/102/800/600', expires: '2025-10-30', quantity: 4, notes: 'Plain, store at 4°C', category: 'Dairy', owner: 'community', isCommunity: true },
+  { id: 'p3',  name: 'Baby Spinach', image: 'https://picsum.photos/id/292/800/600', expires: '2025-10-28', quantity: 1, notes: 'Use within 3 days of opening', category: 'Greens', owner: 'me', isCommunity: false },
+  { id: 'p4',  name: 'Sourdough Bread', image: 'https://picsum.photos/id/1082/800/600', expires: '2025-11-05', quantity: 1, notes: 'Keep sealed', category: 'Bakery', owner: 'community', isCommunity: true },
+  { id: 'p5',  name: 'Orange Juice', image: 'https://picsum.photos/id/1011/800/600', expires: '2025-11-10', quantity: 2, notes: 'Keep cold', category: 'Beverages', owner: 'me', isCommunity: false },
+  { id: 'p6',  name: 'Block of Cheddar', image: 'https://picsum.photos/id/1040/800/600', expires: '2025-10-29', quantity: 1, notes: 'Keep wrapped', category: 'Dairy', owner: 'alice', isCommunity: false },
+  { id: 'p7',  name: 'Tomato Sauce (jar)', image: 'https://picsum.photos/id/1084/800/600', expires: '2026-01-15', quantity: 2, notes: 'Store in pantry after opening', category: 'Sauces', owner: 'bob', isCommunity: false },
+  { id: 'p8',  name: 'Canned Tuna', image: 'https://picsum.photos/id/1015/800/600', expires: '2027-03-01', quantity: 6, notes: 'Shelf stable', category: 'Canned', owner: 'unclaimed', isCommunity: false },
+  { id: 'p9',  name: 'Eggs (dozen)', image: 'https://picsum.photos/id/1025/800/600', expires: '2025-11-01', quantity: 12, notes: 'Detected 2h ago', category: 'Protein', owner: 'unclaimed', isCommunity: false },
+  { id: 'p10', name: 'Chocolate Spread', image: 'https://picsum.photos/id/1062/800/600', expires: '', quantity: 1, notes: 'No expiration', category: 'Spread', owner: 'carla', isCommunity: false },
+  { id: 'p11', name: 'Shelf Pickles', image: 'https://picsum.photos/id/1027/800/600', expires: '2026-06-10', quantity: 1, notes: 'Shared jar from community', category: 'Condiments', owner: 'community', isCommunity: true },
+  { id: 'p12', name: 'Kale Greens', image: 'https://picsum.photos/id/100/800/600', expires: '2025-11-04', quantity: 3, notes: 'Rinse before use', category: 'Greens', owner: 'me', isCommunity: false },
+  { id: 'p13', name: 'Parmesan Wedge', image: 'https://picsum.photos/id/1033/800/600', expires: '2025-12-01', quantity: 1, notes: 'Store in cheese drawer', category: 'Dairy', owner: 'carla', isCommunity: false },
+  { id: 'p14', name: 'Ground Beef', image: 'https://picsum.photos/id/1035/800/600', expires: '2025-10-29', quantity: 2, notes: 'Freeze if not used within 2 days', category: 'Meat', owner: 'bob', isCommunity: false },
+  { id: 'p15', name: 'Bananas', image: 'https://picsum.photos/id/1037/800/600', expires: '2025-10-27', quantity: 6, notes: 'Store at room temperature', category: 'Fruits', owner: 'unclaimed', isCommunity: false },
+  { id: 'p16', name: 'Blueberries', image: 'https://picsum.photos/id/1039/800/600', expires: '2025-11-06', quantity: 2, notes: 'Keep refrigerated', category: 'Fruits', owner: 'alice', isCommunity: false },
+  { id: 'p17', name: 'Frozen Peas', image: 'https://picsum.photos/id/1043/800/600', expires: '2027-02-01', quantity: 4, notes: 'Store in freezer', category: 'Frozen', owner: 'community', isCommunity: true },
+  { id: 'p18', name: 'Baguette', image: 'https://picsum.photos/id/1045/800/600', expires: '2025-10-26', quantity: 1, notes: 'Best eaten same day', category: 'Bakery', owner: 'me', isCommunity: false },
+  { id: 'p19', name: 'Peanut Butter', image: 'https://picsum.photos/id/1050/800/600', expires: '2026-04-10', quantity: 1, notes: 'No refrigeration required', category: 'Spread', owner: 'dave', isCommunity: false },
+  { id: 'p20', name: 'Green Tea', image: 'https://picsum.photos/id/1056/800/600', expires: '2028-01-01', quantity: 10, notes: 'Shelf stable', category: 'Beverages', owner: 'unclaimed', isCommunity: false },
+  { id: 'p21', name: 'Marinara Sauce', image: 'https://picsum.photos/id/1060/800/600', expires: '2026-07-12', quantity: 3, notes: 'Once opened refrigerate', category: 'Sauces', owner: 'community', isCommunity: true },
+  { id: 'p22', name: 'Almond Milk', image: 'https://picsum.photos/id/1065/800/600', expires: '2025-11-20', quantity: 2, notes: 'Keep refrigerated after opening', category: 'Beverages', owner: 'me', isCommunity: false },
+  { id: 'p23', name: 'All-purpose Flour', image: 'https://picsum.photos/id/1070/800/600', expires: '2026-08-01', quantity: 1, notes: 'Store in a cool dry place', category: 'Baking', owner: 'me', isCommunity: false },
+  { id: 'p24', name: 'Granulated Sugar', image: 'https://picsum.photos/id/1071/800/600', expires: '2028-01-01', quantity: 1, notes: 'Keep sealed', category: 'Baking', owner: 'me', isCommunity: false },
+  { id: 'p25', name: 'Table Salt', image: 'https://picsum.photos/id/1072/800/600', expires: '', quantity: 1, notes: 'No expiration', category: 'Pantry', owner: 'unclaimed', isCommunity: false },
+  { id: 'p26', name: 'White Rice (bag)', image: 'https://picsum.photos/id/1073/800/600', expires: '2027-05-01', quantity: 1, notes: 'Shelf stable', category: 'Pantry', owner: 'bob', isCommunity: false },
+  { id: 'p27', name: 'Spaghetti (pasta)', image: 'https://picsum.photos/id/1074/800/600', expires: '2026-03-01', quantity: 2, notes: 'Dry pasta', category: 'Pantry', owner: 'alice', isCommunity: false },
+  { id: 'p28', name: 'Olive Oil', image: 'https://picsum.photos/id/1075/800/600', expires: '2026-12-01', quantity: 1, notes: 'Keep away from heat', category: 'Pantry', owner: 'me', isCommunity: false },
+  { id: 'p29', name: 'Unsalted Butter', image: 'https://picsum.photos/id/1076/800/600', expires: '2025-11-15', quantity: 1, notes: 'Keep refrigerated', category: 'Dairy', owner: 'carla', isCommunity: false },
+  { id: 'p30', name: 'Yellow Onion', image: 'https://picsum.photos/id/1077/800/600', expires: '2025-11-10', quantity: 4, notes: 'Store in a cool dry place', category: 'Vegetables', owner: 'me', isCommunity: false },
+  { id: 'p31', name: 'Garlic (bulb)', image: 'https://picsum.photos/id/1078/800/600', expires: '2026-02-15', quantity: 6, notes: 'Store in pantry', category: 'Vegetables', owner: 'community', isCommunity: true },
+  { id: 'p32', name: 'Tomatoes', image: 'https://picsum.photos/id/1079/800/600', expires: '2025-11-02', quantity: 6, notes: 'Store at room temperature until ripe', category: 'Vegetables', owner: 'unclaimed', isCommunity: false },
+  { id: 'p33', name: 'Lemons', image: 'https://picsum.photos/id/1081/800/600', expires: '2025-11-12', quantity: 4, notes: 'Keep refrigerated for longer life', category: 'Fruits', owner: 'me', isCommunity: false },
+  { id: 'p34', name: 'Carrots', image: 'https://picsum.photos/id/1083/800/600', expires: '2025-11-08', quantity: 8, notes: 'Keep in crisper', category: 'Vegetables', owner: 'alice', isCommunity: false },
+  { id: 'p35', name: 'Russet Potatoes', image: 'https://picsum.photos/id/1086/800/600', expires: '2026-01-01', quantity: 5, notes: 'Store in a cool dark place', category: 'Vegetables', owner: 'bob', isCommunity: false },
+  { id: 'p36', name: 'Whole Milk', image: 'https://picsum.photos/id/1087/800/600', expires: '2025-11-04', quantity: 2, notes: 'Keep refrigerated', category: 'Dairy', owner: 'me', isCommunity: false }
+]
+
+// Additional community items
+mockProducts.push(
+  { id: 'p37', name: 'all purpose flour', image: 'https://picsum.photos/id/1090/800/600', expires: '2026-09-01', quantity: 1, notes: 'Community pantry', category: 'Baking', owner: 'community', isCommunity: true },
+  { id: 'p38', name: 'butter', image: 'https://picsum.photos/id/1091/800/600', expires: '2025-11-20', quantity: 1, notes: 'Community item', category: 'Dairy', owner: 'community', isCommunity: true },
+  { id: 'p39', name: 'brown sugar', image: 'https://picsum.photos/id/1092/800/600', expires: '2028-01-01', quantity: 1, notes: 'Shelf stable', category: 'Baking', owner: 'community', isCommunity: true },
+  { id: 'p40', name: 'banana', image: 'https://picsum.photos/id/1093/800/600', expires: '2025-11-02', quantity: 6, notes: 'Fresh bananas', category: 'Fruits', owner: 'community', isCommunity: true },
+  { id: 'p41', name: 'vanilla extract', image: 'https://picsum.photos/id/1094/800/600', expires: '2030-01-01', quantity: 1, notes: 'Baking extract', category: 'Baking', owner: 'community', isCommunity: true },
+  { id: 'p42', name: 'eggs', image: 'https://picsum.photos/id/1095/800/600', expires: '2025-11-05', quantity: 12, notes: 'Dozen', category: 'Protein', owner: 'community', isCommunity: true },
+  { id: 'p43', name: 'granola', image: 'https://picsum.photos/id/1096/800/600', expires: '2026-06-01', quantity: 1, notes: 'Cereal/granola', category: 'Breakfast', owner: 'community', isCommunity: true },
+  { id: 'p44', name: 'strawberries', image: 'https://picsum.photos/id/1097/800/600', expires: '2025-11-03', quantity: 2, notes: 'Fresh', category: 'Fruits', owner: 'community', isCommunity: true },
+  { id: 'p45', name: 'Rice', image: 'https://picsum.photos/id/1098/800/600', expires: '2028-05-01', quantity: 1, notes: 'White rice bag', category: 'Pantry', owner: 'community', isCommunity: true }
+)
