@@ -29,7 +29,7 @@ try{
       root.style.fontSize = `${prefs.textScale}%`
     }
   }
-}catch(e){ /* ignore parse errors */ }
+}catch(_){ void _ }
 
 try{
   const PREF_KEY = 'ep_accessibility_prefs'
@@ -49,9 +49,9 @@ try{
       } else {
         root.style.fontSize = ''
       }
-    }catch(e){ /* ignore */ }
+  }catch(_){ void _ }
   })
-}catch(e){ /* ignore */ }
+}catch(_){ void _ }
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

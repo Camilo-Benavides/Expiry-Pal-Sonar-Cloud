@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 /* FridgeCard
    Renders a fridge list item with optional inline edit and delete actions.
 */
-export default function FridgeCard({ fridge, onSave, onDelete, compact = false }){
+export default function FridgeCard({ fridge, onSave, onDelete, _compact = false }){
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(fridge?.name || '')
 

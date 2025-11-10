@@ -1,16 +1,25 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
 import { mockProducts } from '../data/mockProducts'
 import Badge from '../components/ui/Badge'
 import DetailHeader from '../components/ui/DetailHeader'
 import DetailCard from '../components/ui/DetailCard'
 import Topbar from '../components/navigation/Topbar'
+import CameraCapture from '../components/ui/CameraCapture'
+import UnitToggle from '../components/ui/UnitToggle'
+import NutritionCard from '../components/nutrition/NutritionCard'
+import { convertAmount, fmt, convertMgToOz } from '../helpers/units'
 
 export default function ProductDetails(){
   const { id } = useParams()
   const { search } = useLocation()
   const params = new URLSearchParams(search)
   const fridgeId = params.get('fridge')
+  const [unitSystem, setUnitSystem] = useState(() => {
+    try{ const v = localStorage.getItem('ep_unitSystem'); return v || 'metric' }catch{ return 'metric' }
+  })
+  const [showCamera, setShowCamera] = useState(false)
+  const [localImage, setLocalImage] = useState(null)
   let item = mockProducts.find(p=>p.id===id)
   if (fridgeId) {
     try{
@@ -45,6 +54,7 @@ export default function ProductDetails(){
     : 'var(--badge-fresh-color)'
 
   const nutrition = item.nutrition || { calories: 61, protein: 3.2, carbs: 4.8, fat: 3.3, sugar: 4.7, sodium: 44 }
+  const displayImage = localImage || item.image
 
   return (
     <>
@@ -63,51 +73,46 @@ export default function ProductDetails(){
             {/* Header card */}
             <DetailCard style={{boxShadow:'0 6px 18px rgba(11,22,28,0.06)'}}>
               <DetailHeader
-                image={item.image}
+                image={displayImage}
                 title={item.name}
                 subtitle={`${item.quantity} · ${item.category}`}
                 badgeText={expiryText}
                 badgeBg={badgeBgVar}
                 badgeColor={badgeColorVar}
-                meta={<>
-                  <div style={{padding:'6px 10px',borderRadius:16,background:'var(--badge-neutral-bg)',color:'var(--badge-neutral-color)',border:'1px solid var(--md-sys-color-outline-variant)'}}>Barcode: 5901234123457</div>
-                  <div style={{padding:'6px 10px',borderRadius:16,background:'var(--badge-neutral-bg)',color:'var(--badge-neutral-color)',border:'1px solid var(--md-sys-color-outline-variant)'}}>Location: Fridge · Top shelf</div>
-                </>}
-                actions={<button className="btn">Edit</button>}
+                meta={
+                  <>
+                    <div style={{padding:'6px 10px',borderRadius:16,background:'var(--badge-neutral-bg)',color:'var(--badge-neutral-color)',border:'1px solid var(--md-sys-color-outline-variant)'}}>Barcode: 5901234123457</div>
+                    <div style={{padding:'6px 10px',borderRadius:16,background:'var(--badge-neutral-bg)',color:'var(--badge-neutral-color)',border:'1px solid var(--md-sys-color-outline-variant)'}}>Location: Fridge · Top shelf</div>
+                  </>
+                }
+                actions={
+                  <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                    <button className="btn" onClick={()=>{/* edit stub - open edit UI */}} style={{background:'#f59e0b',color:'#fff',border:'none'}}>✎ Edit</button>
+                    <button
+                      className="btn"
+                      onClick={()=>setShowCamera(true)}
+                      aria-label="Open camera"
+                      style={{display:'inline-flex',alignItems:'center',gap:8,background:'#2563eb',color:'#fff',border:'none',padding:'8px 14px',borderRadius:10}}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" fill="#ffffff"/>
+                        <path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z" stroke="#ffffff" strokeWidth="0.5" fill="none"/>
+                      </svg>
+                      <span style={{fontWeight:700}}>Add / Take photo</span>
+                    </button>
+                  </div>
+                }
               />
             </DetailCard>
 
-            {/* Nutrition card */}
-            <DetailCard>
-              <div style={{fontWeight:700,marginBottom:10}}>Nutrition <span style={{fontWeight:600,color:'var(--md-sys-color-on-surface-variant)',fontSize:13,marginLeft:8}}>per 100 g</span></div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
-                <div style={{padding:12,borderRadius:10,background:'var(--badge-neutral-bg)'}}>
-                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)'}}>Calories</div>
-                  <div style={{fontWeight:800,fontSize:18}}>{nutrition.calories} kcal</div>
-                </div>
-                <div style={{padding:12,borderRadius:10,background:'var(--badge-neutral-bg)'}}>
-                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)'}}>Protein</div>
-                  <div style={{fontWeight:800,fontSize:18}}>{nutrition.protein} g</div>
-                </div>
-                <div style={{padding:12,borderRadius:10,background:'var(--badge-neutral-bg)'}}>
-                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)'}}>Carbs</div>
-                  <div style={{fontWeight:800,fontSize:18}}>{nutrition.carbs} g</div>
-                </div>
+            {showCamera && (
+              <DetailCard>
+                <CameraCapture onCapture={(dataUrl) => { setLocalImage(dataUrl); setShowCamera(false) }} onClose={() => setShowCamera(false)} />
+              </DetailCard>
+            )}
 
-                <div style={{padding:12,borderRadius:10,background:'var(--badge-neutral-bg)'}}>
-                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)'}}>Fat</div>
-                  <div style={{fontWeight:800,fontSize:18}}>{nutrition.fat} g</div>
-                </div>
-                <div style={{padding:12,borderRadius:10,background:'var(--badge-neutral-bg)'}}>
-                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)'}}>Sugar</div>
-                  <div style={{fontWeight:800,fontSize:18}}>{nutrition.sugar} g</div>
-                </div>
-                <div style={{padding:12,borderRadius:10,background:'var(--badge-neutral-bg)'}}>
-                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)'}}>Sodium</div>
-                  <div style={{fontWeight:800,fontSize:18}}>{nutrition.sodium} mg</div>
-                </div>
-              </div>
-              <div style={{marginTop:10,color:'var(--md-sys-color-on-surface-variant)'}}>Source: Open Food Facts · <a href="#">Update</a></div>
+            <DetailCard>
+              <NutritionCard nutrition={nutrition} unitSystem={unitSystem} onChange={setUnitSystem} perLabel="per 100 g" />
             </DetailCard>
 
             {/* Status card */}
@@ -123,7 +128,30 @@ export default function ProductDetails(){
             {/* Notes card */}
             <DetailCard>
               <div style={{fontWeight:700,marginBottom:10}}>Notes</div>
-              <div style={{color:'var(--md-sys-color-on-surface-variant)'}}>{item.notes}</div>
+              <div style={{color:'var(--md-sys-color-on-surface-variant)'}}>{(function convertNotes(s){
+                if (!s) return ''
+                try{
+                  let out = String(s)
+                  const convertTemp = (val, to) => {
+                    const n = Number(String(val).replace(',', '.'))
+                    if (!Number.isFinite(n)) return null
+                    if (to === 'imperial') return Math.round((n * 9/5) + 32)
+                    return Math.round((n - 32) * 5/9)
+                  }
+                  if (unitSystem === 'imperial'){
+                    out = out.replace(/([0-9]+(?:[.,][0-9]+)?)\s*°?\s*(?:c|celsius)\b/gi, (m,p1)=>{
+                      const f = convertTemp(p1, 'imperial')
+                      return f == null ? m : `${f}°F`
+                    })
+                  } else {
+                    out = out.replace(/([0-9]+(?:[.,][0-9]+)?)\s*°?\s*(?:f|fahrenheit)\b/gi, (m,p1)=>{
+                      const c = convertTemp(p1, 'metric')
+                      return c == null ? m : `${c}°C`
+                    })
+                  }
+                  return out
+                  }catch{ return s }
+              })(item.notes)}</div>
             </DetailCard>
 
           </div>

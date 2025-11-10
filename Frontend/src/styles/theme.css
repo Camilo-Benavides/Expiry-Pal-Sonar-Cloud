@@ -134,6 +134,10 @@
     white-space:nowrap;
   }
   .btn.primary{ background:var(--md-sys-color-primary); color:var(--md-sys-color-on-primary); border-color:transparent }
+  .btn.success{ background:#10B981; color:#fff; border-color:transparent }
+  .btn.secondary{ background:#F3F4F6; color:var(--md-sys-color-on-surface); border-color:transparent }
+  .btn.edit{ background:#F59E0B; color:#000; border-color:transparent }
+  .btn.photo{ background:#2563EB; color:#fff; border-color:transparent }
   .btn.full{ width:100% }
   .btn.danger{ background:var(--badge-danger-bg); color:var(--badge-danger-color); border-color:transparent }
 
@@ -251,6 +255,7 @@
 
   /* Subtle chip selected state for filters (avoid using strong primary) */
   .btn.chip-selected{ background: var(--filter-selected-bg); color: var(--filter-selected-color); border-color: transparent }
+  .btn .material-symbols-rounded{ font-size:18px; vertical-align:middle }
   /* Add more vertical spacing above and below the search area so topbar and cards
     have comfortable separation. Increase top spacing so topbar and search are farther apart. */
   .hero-search-wrap{ display:flex; justify-content:center; margin-top:100px; margin-bottom:40px }
@@ -383,5 +388,31 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   opacity: 1 !important;
+}
+
+/* Recipe header controls: secondary row below title for units/servings/mark */
+.recipe-header-controls{
+  display:flex; align-items:center; gap:12px; margin-top:12px; width:100%;
+  justify-content:space-between; flex-wrap:wrap;
+}
+.recipe-header-controls > .recipe-controls-left,
+.recipe-header-controls > .recipe-controls-center,
+.recipe-header-controls > .recipe-controls-right{
+  display:flex; align-items:center; gap:8px;
+}
+
+/* Servings spinner: compact control with decrement/input/increment */
+.servings-spinner{ display:inline-flex; align-items:center; gap:8px; }
+.servings-spinner .btn{ height:36px; min-width:36px; padding:0; font-weight:800; }
+.servings-spinner input{ width:56px; text-align:center; border-radius:8px; border:1px solid var(--md-sys-color-outline-variant); padding:6px 8px; height:36px; background:transparent }
+
+/* Responsive: stack controls on narrow screens and make buttons full-width where useful */
+@media (max-width:640px){
+  .recipe-header-controls{ flex-direction:column; align-items:stretch; gap:10px }
+  .recipe-header-controls > .recipe-controls-left,
+  .recipe-header-controls > .recipe-controls-center,
+  .recipe-header-controls > .recipe-controls-right{ justify-content:flex-start }
+  .servings-spinner input{ width:100%; }
+  .servings-spinner .btn{ min-width:44px }
 }
 

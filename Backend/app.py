@@ -12,8 +12,12 @@ BASE_SRC = os.path.join(BASE_DIR, 'src')
 if BASE_SRC not in sys.path:
     sys.path.append(BASE_SRC)
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect, send_from_directory
 from flask_cors import CORS
+try:
+    from flasgger import Swagger
+except Exception:
+    Swagger = None
 
 # Load .env early and auto-disable Firebase when key is missing/malformed
 from dotenv import load_dotenv
@@ -43,6 +47,9 @@ from src.models.items import create_item, list_items
 # Initialize Flask app
 app = Flask(__name__)
 
+# NOTE: Swagger will be initialized after route registration so that all
+# endpoints (including blueprints) are picked up by the automatic spec.
+
 # Load application configuration from environment (SPOONACULAR keys, etc.)
 try:
     from src.app_config import Config
@@ -64,6 +71,33 @@ CORS(app, resources={
 # Register recipe recommendation blueprint (provides /recipes/suggest)
 app.register_blueprint(recipe_recommendation_bp)
 
+# Initialize Flasgger (Swagger UI) when available. Expose docs at /docs
+# Initialize here (after blueprints/routes are registered) so /docs works
+# whether the app is started via `python app.py` or `flask run`.
+if Swagger is not None:
+    swagger_template = {
+        "info": {
+            "title": "ExpiryPalNext API",
+            "description": "ExpiryPalNext backend API documentation",
+            "version": "1.0.0"
+        }
+    }
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": 'apispec_1',
+                "route": '/apispec_1.json',
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/docs"
+    }
+    Swagger(app, config=swagger_config, template=swagger_template)
+
 # Initialize Firebase Admin SDK 
 try:
     init_firebase()
@@ -73,6 +107,25 @@ except Exception as e:
 # ---------- Health / Basic endpoints ----------
 @app.route('/')
 def health_check():
+    """Health check
+    ---
+    tags:
+        - Health
+    responses:
+        200:
+            description: Health status
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            status:
+                                type: string
+                            service:
+                                type: string
+                            version:
+                                type: string
+    """
     return jsonify({
         'status': 'ok',
         'service': 'ExpiryPalNext Backend',
@@ -85,6 +138,50 @@ def public_endpoint():
         'message': 'This is a public endpoint',
         'accessible': 'Everyone can access this'
     })
+
+
+# Minimal OpenAPI JSON (fallback) so the static Swagger UI can load a spec at /openapi.json
+@app.route('/openapi.json')
+def openapi_spec():
+    spec = {
+        "openapi": "3.0.0",
+        "info": {"title": "ExpiryPalNext API", "version": "1.0.0"},
+        "paths": {
+            "/": {
+                "get": {
+                    "tags": ["Health"],
+                    "summary": "Health check",
+                    "responses": {
+                        "200": {
+                            "description": "Health status",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {"type": "string"},
+                                            "service": {"type": "string"},
+                                            "version": {"type": "string"}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return jsonify(spec)
+
+
+# Serve a tiny static docs UI that uses Swagger UI CDN and fetches /openapi.json
+@app.route('/docs/')
+def serve_docs_index():
+    try:
+        return send_from_directory(os.path.join(BASE_DIR, 'docs'), 'index.html')
+    except Exception:
+        return jsonify({'error': 'Docs not available'}), 404
 
 # ---------- Auth endpoints (require_auth / optional_auth) ----------
 @app.route('/api/protected')
@@ -185,12 +282,42 @@ def get_recipes():
 def not_found(error):
     return jsonify({'error': 'Endpoint not found'}), 404
 
+
+@app.route('/docs')
+def docs_redirect():
+    return redirect('/docs/')
+
 @app.errorhandler(500)
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 # ---------- Main ----------
 if __name__ == '__main__':
+    # Initialize Flasgger (Swagger UI) when available. Expose docs at /docs
+    if Swagger is not None:
+        swagger_template = {
+            "info": {
+                "title": "ExpiryPalNext API",
+                "description": "ExpiryPalNext backend API documentation",
+                "version": "1.0.0"
+            }
+        }
+        swagger_config = {
+            "headers": [],
+            "specs": [
+                {
+                    "endpoint": 'apispec_1',
+                    "route": '/apispec_1.json',
+                    "rule_filter": lambda rule: True,
+                    "model_filter": lambda tag: True,
+                }
+            ],
+            "static_url_path": "/flasgger_static",
+            "swagger_ui": True,
+            "specs_route": "/docs"
+        }
+        Swagger(app, config=swagger_config, template=swagger_template)
+
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_ENV', 'development') == 'development'
     app.run(debug=debug, host='0.0.0.0', port=port)

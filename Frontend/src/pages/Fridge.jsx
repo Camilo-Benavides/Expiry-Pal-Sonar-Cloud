@@ -10,8 +10,10 @@ import HeroSearchFilters from '../components/ui/HeroSearchFilters'
 export default function Fridge() {
   const [query, setQuery] = useState('')
   const [category, _setCategory] = useState('All')
-  const [ownerFilter, setOwnerFilter] = useState('all') // 'mine' | 'community' | 'all' | 'others' | 'unclaimed'
-  const [statusFilter, setStatusFilter] = useState('All') // All | Fresh | Soon | Expired | No expiration
+  // ownerFilter is a list of selected owner filters; empty = All
+  const [ownerFilter, setOwnerFilter] = useState([]) // e.g. ['mine','community']
+  // statusFilter is an array of selected statuses; empty = All
+  const [statusFilter, setStatusFilter] = useState([]) // e.g. ['Fresh','Soon','Expired']
 
   const _categories = useMemo(() => {
     const cats = new Set(mockProducts.map(p => p.category))
@@ -55,21 +57,30 @@ export default function Fridge() {
   const byCategory = (p) => category === 'All' ? true : p.category === category
 
   const filterOwner = (p) => {
-    if (!ownerFilter || ownerFilter === 'all') return true
-    if (ownerFilter === 'mine' || ownerFilter === 'my') return p.owner === 'me'
-    if (ownerFilter === 'community' || ownerFilter === 'communitary') return p.isCommunity
-    if (ownerFilter === 'others') return p.owner && p.owner !== 'me' && !p.isCommunity && p.owner !== 'unclaimed'
-    if (ownerFilter === 'unclaimed') return !p.owner || p.owner === 'unclaimed'
-    return true
+    // empty selection === All
+    if (!Array.isArray(ownerFilter) || ownerFilter.length === 0) return true
+    for (const s of ownerFilter) {
+      if ((s === 'mine' || s === 'my') && p.owner === 'me') return true
+      if ((s === 'community' || s === 'communitary') && p.isCommunity) return true
+      if (s === 'others' && p.owner && p.owner !== 'me' && !p.isCommunity && p.owner !== 'unclaimed') return true
+      if (s === 'unclaimed' && (!p.owner || p.owner === 'unclaimed')) return true
+      if (s === 'all') return true
+    }
+    return false
   }
 
   const filterStatus = (p) => {
-    if (!statusFilter || statusFilter === 'All') return true
-    if (statusFilter === 'Fresh') return p._status === 'fresh'
-    if (statusFilter === 'Soon') return p._status === 'soon' || p._status === 'today'
-    if (statusFilter === 'Expired') return p._status === 'expired'
-    if (statusFilter === 'No expiration') return p._status === 'no-expiration'
-    return true
+    // empty selection === All
+    if (!Array.isArray(statusFilter) || statusFilter.length === 0) return true
+    // if any selected status matches the item's status, include it
+    for (const s of statusFilter) {
+      if (s === 'Fresh' && p._status === 'fresh') return true
+      if (s === 'Soon' && (p._status === 'soon' || p._status === 'today')) return true
+      if (s === 'Expired' && p._status === 'expired') return true
+      if (s === 'No expiration' && p._status === 'no-expiration') return true
+      if (s === 'All') return true
+    }
+    return false
   }
 
   const enrich = (p) => {
@@ -86,6 +97,33 @@ export default function Fridge() {
       else status = 'fresh'
     }
     return {...p, _days: days, _status: status}
+  }
+
+  const toggleStatusFilter = (s) => {
+    // clicking 'All' clears all other selections
+    if (s === 'All') { setStatusFilter([]); return }
+    setStatusFilter(prev => {
+      const arr = Array.isArray(prev) ? [...prev] : []
+      const idx = arr.indexOf(s)
+      if (idx !== -1) {
+        arr.splice(idx, 1)
+      } else {
+        arr.push(s)
+      }
+      return arr
+    })
+  }
+
+  const toggleOwnerFilter = (v) => {
+    // clicking 'all' clears selections
+    if (v === 'all') { setOwnerFilter([]); return }
+    setOwnerFilter(prev => {
+      const arr = Array.isArray(prev) ? [...prev] : []
+      const idx = arr.indexOf(v)
+      if (idx !== -1) arr.splice(idx, 1)
+      else arr.push(v)
+      return arr
+    })
   }
 
   const items = useMemo(() => {
@@ -122,7 +160,10 @@ export default function Fridge() {
 
   const formatBadge = (p) => {
     if (p._status === 'no-expiration') return { text: 'No expiration', tone: 'neutral', bgVar: 'var(--badge-neutral-bg)', colorVar: 'var(--badge-neutral-color)' }
-    if (p._status === 'expired') return { text: 'Expired', tone: 'danger', bgVar: 'var(--badge-danger-bg)', colorVar: 'var(--badge-danger-color)' }
+    if (p._status === 'expired') {
+      const d = p._days != null ? Math.abs(p._days) : null
+      return { text: d == null ? 'Expired' : `Expired ${d}d ago`, tone: 'danger', bgVar: 'var(--badge-danger-bg)', colorVar: 'var(--badge-danger-color)' }
+    }
     if (p._status === 'today') return { text: 'Today', tone: 'soon', bgVar: 'var(--badge-soon-bg)', colorVar: 'var(--badge-soon-color)' }
     if (p._status === 'soon') return { text: p._days === 1 ? '1 day' : `${p._days} days`, tone: 'soon', bgVar: 'var(--badge-soon-bg)', colorVar: 'var(--badge-soon-color)' }
     return { text: `In ${p._days} days`, tone: 'fresh', bgVar: 'var(--badge-fresh-bg)', colorVar: 'var(--badge-fresh-color)' }
@@ -139,10 +180,10 @@ export default function Fridge() {
             query={query}
             onQueryChange={setQuery}
             showOwner={true}
-            onOwnerChange={setOwnerFilter}
+            onOwnerChange={toggleOwnerFilter}
             ownerFilter={ownerFilter}
             showStatus={true}
-            onStatusChange={setStatusFilter}
+            onStatusChange={toggleStatusFilter}
             statusFilter={statusFilter}
             placeholder="Search items, categories..."
           />
@@ -166,9 +207,12 @@ export default function Fridge() {
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 {[
                   ['all','All'], ['mine','Mine'], ['community','Community'], ['others','Others'], ['unclaimed','Unclaimed']
-                ].map(([val,label]) => (
-                  <button key={val} onClick={() => setOwnerFilter(val)} className={`btn ${ownerFilter===val ? 'chip-selected' : ''}`}>{label}</button>
-                ))}
+                ].map(([val,label]) => {
+                  const selected = Array.isArray(ownerFilter) ? (ownerFilter.length === 0 && val === 'all') || ownerFilter.includes(val) : ownerFilter === val
+                  return (
+                    <button key={val} onClick={() => toggleOwnerFilter(val)} className={`btn ${selected ? 'chip-selected' : ''}`}>{label}</button>
+                  )
+                })}
               </div>
             </div>
 
@@ -176,7 +220,7 @@ export default function Fridge() {
               <div style={{fontWeight:700,marginTop:8,marginBottom:8}}>Filter by status</div>
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 {['All','Fresh','Soon','Expired','No expiration'].map(s => (
-                  <button key={s} onClick={() => setStatusFilter(s)} className={`btn ${statusFilter===s ? 'chip-selected' : ''}`} style={{fontWeight:700}}>{s}</button>
+                  <button key={s} onClick={() => toggleStatusFilter(s)} className={`btn ${((Array.isArray(statusFilter) && statusFilter.length===0 && s==='All') || (Array.isArray(statusFilter) && statusFilter.includes(s))) ? 'chip-selected' : ''}`} style={{fontWeight:700}}>{s}</button>
                 ))}
               </div>
             </div>

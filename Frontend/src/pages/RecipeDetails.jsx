@@ -2,8 +2,16 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
 import Topbar from '../components/navigation/Topbar'
 import DetailCard from '../components/ui/DetailCard'
+import IngredientRow from '../components/ingredients/IngredientRow'
 import { recipes } from '../data/recipes'
 import { mockProducts } from '../data/mockProducts'
+import { parseServings, formatNumber as fmtServ } from '../helpers/servings'
+import { fmt, convertAmount, parseQuantity, convertTemp } from '../helpers/units'
+import { normalizeVulgarFractions, parseLeadingQuantity } from '../helpers/quantity'
+import { canonicalUnit } from '../helpers/unitTokens'
+import { addMany } from '../helpers/cart'
+import convertSummary from '../helpers/convertSummary'
+import NutritionCard from '../components/nutrition/NutritionCard'
 
 export default function RecipeDetails(){
   const { id } = useParams()
@@ -16,6 +24,13 @@ export default function RecipeDetails(){
   const [prepared, setPrepared] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [unitSystem, setUnitSystem] = useState(() => {
+    try{ const v = localStorage.getItem('ep_unitSystem'); return v || 'metric' }catch(e){ return 'metric' }
+  })
+
+  // determine base servings and desired servings state
+  const baseServingsGuess = parseServings(recipe) || (typeof recipe?.servings === 'number' ? recipe.servings : null) || 1
+  const [desiredServings, setDesiredServings] = useState(baseServingsGuess)
 
   useEffect(()=>{
     if (recipe) return
@@ -91,13 +106,43 @@ export default function RecipeDetails(){
   if (error) return <div className="min-h-screen flex items-center justify-center">Could not load recipe: {error}</div>
   if(!recipe) return <div className="min-h-screen flex items-center justify-center">Recipe not found</div>
 
+  const saveUnitSystem = (s) => {
+    setUnitSystem(s)
+    try{ localStorage.setItem('ep_unitSystem', s) }catch(e){}
+  }
+
+  // compute scale factor from base -> desired
+  const scaleFactor = (() => {
+    const base = baseServingsGuess || 1
+    const d = Number(desiredServings) || base
+    return base > 0 ? (d / base) : 1
+  })()
+
+  // prepare scaled nutrition object so the shared NutritionCard can display per-serving values
+  const scaledNutrition = (() => {
+    if (!recipe || !recipe.nutrition) return null
+    const raw = recipe.nutrition
+    // spoonacular-style: { nutrients: [ { name, amount, unit }, ... ] }
+    if (Array.isArray(raw.nutrients)) {
+      return { ...raw, nutrients: raw.nutrients.map(n => ({ ...n, amount: (typeof n.amount === 'number') ? (n.amount * scaleFactor) : n.amount })) }
+    }
+    // object form: { calories, protein, carbs, fat, sugar, sodium }
+    const keys = ['calories','protein','carbs','fat','sugar','sodium']
+    const obj = { ...raw }
+    keys.forEach(k => { if (typeof obj[k] === 'number') obj[k] = obj[k] * scaleFactor })
+    return obj
+  })()
+
+  // use shared helpers from ../helpers/units: fmt, convertAmount, parseQuantity, convertTemp
+
+  
+
   return (
     <>
       <div className="hero-banner desktop-only">
         <Topbar active="recipes" />
         <div className="hero-search-wrap"><div className="hero-search" /></div>
-      </div>
-
+        </div>
       <div className="min-h-screen flex items-start justify-center bg-ep-background px-4 py-6 hero-overlap">
         <div className="w-full" style={{maxWidth:1100}}>
           <div style={{display:'grid',gap:16}}>
@@ -118,8 +163,30 @@ export default function RecipeDetails(){
                   ))}
                 </div>
               </div>
+              {/* Mark button aligned right next to the title to keep header clean */}
               <div style={{marginLeft:'auto'}}>
                 <button className="btn" onClick={()=>setPrepared(p=>!p)}>{prepared ? 'Unmark' : 'Mark as prepared'}</button>
+              </div>
+            </DetailCard>
+
+            {/* Controls card: Units and Servings live here to avoid crowding the header */}
+            <DetailCard>
+              <div className="recipe-header-controls" style={{alignItems:'center'}}>
+                <div className="recipe-controls-left">
+                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)',marginRight:6}}>Units</div>
+                  <button className={`btn ${unitSystem==='metric' ? 'chip-selected' : ''}`} onClick={()=>saveUnitSystem('metric')}>Metric</button>
+                  <button className={`btn ${unitSystem==='imperial' ? 'chip-selected' : ''}`} onClick={()=>saveUnitSystem('imperial')}>Imperial</button>
+                </div>
+                <div style={{flex:1}} />
+                <div className="recipe-controls-right">
+                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)',marginRight:8}}>Servings</div>
+                  <div className="servings-spinner">
+                    <button className="btn" onClick={()=>setDesiredServings(s => Math.max(1, Number(s)-1))} aria-label="decrease servings">-</button>
+                    <input aria-label="desired servings" value={desiredServings} onChange={e=>setDesiredServings(e.target.value)} />
+                    <button className="btn" onClick={()=>setDesiredServings(s => Number(s)+1)} aria-label="increase servings">+</button>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)',marginLeft:10}}>base: {baseServingsGuess}</div>
+                </div>
               </div>
             </DetailCard>
 
@@ -130,7 +197,7 @@ export default function RecipeDetails(){
                 ) : null}
                 <div style={{flex:1}}>
                   {recipe.summary ? (
-                    <div dangerouslySetInnerHTML={{__html: recipe.summary}} style={{color:'var(--md-sys-color-on-surface-variant)'}} />
+                    <div dangerouslySetInnerHTML={{__html: convertSummary(recipe.summary, unitSystem)}} style={{color:'var(--md-sys-color-on-surface-variant)'}} />
                   ) : (
                     <div style={{color:'var(--md-sys-color-on-surface-variant)'}}>No description available.</div>
                   )}
@@ -147,51 +214,61 @@ export default function RecipeDetails(){
                   <div style={{fontWeight:700}}>Ingredients</div>
                   <div style={{marginTop:10,display:'grid',gap:8}}>
                     {(recipe.ingredients || []).map(it => (
-                      <div key={(it.name || '') + String(it.id || '')} style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                        <div>
-                          <div style={{fontWeight:700}}>{it.nameClean || it.name}</div>
-                          <div style={{fontSize:12,color:'var(--md-sys-color-on-surface-variant)'}}>
-                            {it.original ? (
-                              <div style={{fontSize:13,color:'var(--md-sys-color-on-surface-variant)'}}>{it.original}</div>
-                            ) : (
-                              (() => {
-                                const a = (typeof it.amount === 'number') ? (Number.isInteger(it.amount) ? String(it.amount) : it.amount.toFixed(2)) : (it.amount || '')
-                                const u = it.unit || ''
-                                const amt = a ? `${a}${u ? ' ' + u : ''}` : ''
-                                return <div style={{fontSize:13,color:'var(--md-sys-color-on-surface-variant)'}}>{amt}</div>
-                              })()
-                            )}
-                          </div>
-                        </div>
-                        <div>{it.available ? <span className="badge badge--fresh">✔︎</span> : <button className="btn">Add</button>}</div>
+                      <div key={(it.name || '') + String(it.id || '')}>
+                        <IngredientRow ingredient={it} scaleFactor={scaleFactor} unitSystem={unitSystem} />
                       </div>
                     ))}
+                    {/* Add all missing ingredients button */}
+                    { (recipe.ingredients || []).some(i => !i.available) ? (
+                      <div style={{display:'flex',justifyContent:'center',marginTop:12}}>
+                        <button className="btn primary" aria-label="Add all missing ingredients to cart" onClick={() => {
+                          // gather missing ingredients
+                          try{
+                            const missings = (recipe.ingredients || []).filter(i=>!i.available)
+                            const toAdd = missings.map(i => {
+                              // try to extract a numeric scaled quantity if possible
+                              let qty = null; let unit = null; let note = ''
+                              if (i.original) {
+                                // normalize hyphens/dashes and vulgar fraction glyphs so inputs like "1 -1/2 c" become "1 1/2 c"
+                                const origStr = normalizeVulgarFractions(String(i.original)).replace(/[-\u2013\u2014]/g, ' ').trim()
+                                const m = origStr.match(/^\s*([0-9]+(?:[\s\d\/\.]*[0-9])?)\s*(.*)$/)
+                                if (m) {
+                                  const parsed = parseQuantity(m[1])
+                                  if (parsed != null) {
+                                    qty = parsed * scaleFactor
+                                    // try to capture first token as unit if present
+                                    const restParts = (m[2] || '').split(/\s+/).filter(Boolean)
+                                      if (restParts.length > 0) {
+                                      const cand = restParts[0].toLowerCase().replace(/[^a-z]/g,'')
+                                      unit = canonicalUnit(cand)
+                                      note = restParts.slice(1).join(' ')
+                                    }
+                                  }
+                                }
+                              }
+                              return {
+                                name: i.nameClean || i.name || i.original || 'Unknown',
+                                original: i.original || '',
+                                qty: qty,
+                                unit: unit,
+                                note: note
+                              }
+                            })
+
+                            try{
+                              addMany(toAdd)
+                              try{ window.alert(`${toAdd.length} missing ingredient(s) added to your cart`) }catch(e){}
+                            }catch(e){ console.error('Could not save cart', e) }
+                          }catch(e){ console.error(e); try{ window.alert('Could not add items to cart') }catch(_){} }
+                        }}>🛒 Add all missing ingredients</button>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </DetailCard>
 
               <DetailCard>
-                <div>
-                  <div style={{fontWeight:700}}>Nutrition</div>
-                  <div style={{marginTop:10}}>
-                    {recipe.nutrition && Array.isArray(recipe.nutrition.nutrients) ? (
-                      <div style={{display:'grid',gridTemplateColumns:'1fr',gap:8}}>
-                        {['Calories','Protein','Fat','Carbohydrates'].map(name => {
-                          const n = (recipe.nutrition.nutrients || []).find(x => x.name === name)
-                          if (!n) return null
-                          return (
-                            <div key={name} style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                              <div style={{fontSize:13}}>{n.name}</div>
-                              <div style={{fontWeight:700}}>{n.amount}{n.unit}</div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <div style={{fontSize:13,color:'var(--md-sys-color-on-surface-variant)'}}>Nutrition per serving not available</div>
-                    )}
-                  </div>
-                </div>
+                <NutritionCard nutrition={scaledNutrition || recipe.nutrition} unitSystem={unitSystem} onChange={saveUnitSystem} perLabel="per serving" showUnitToggle={false} />
               </DetailCard>
             </div>
 
@@ -203,7 +280,7 @@ export default function RecipeDetails(){
                   <div key={idx} style={{display:'grid',gridTemplateColumns:'40px 1fr',gap:12}}>
                     <div style={{fontWeight:700, color:'var(--md-sys-color-on-surface-variant)'}}>{s.number || idx+1}.</div>
                     <div>
-                      <div style={{marginBottom:8}}>{s.step}</div>
+                      <div style={{marginBottom:8}} dangerouslySetInnerHTML={{__html: convertSummary(s.step, unitSystem)}} />
                       {s.equipment && s.equipment.length > 0 && (
                         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                           {s.equipment.map(e => (

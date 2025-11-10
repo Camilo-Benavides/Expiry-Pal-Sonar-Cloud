@@ -38,9 +38,12 @@ export default function HeroSearchFilters({
               <div style={{marginTop:6}}>
                 <div style={{marginBottom:8, fontWeight:700}}>Filter by owner</div>
                 <div style={{display:'flex',gap:8,marginBottom:12}}>
-                  {[['all','All'], ['mine','Mine'], ['community','Community'], ['others','Others'], ['unclaimed','Unclaimed']].map(([val,label]) => (
-                    <button key={val} onClick={() => onOwnerChange(val)} className={`btn ${ownerFilter===val ? 'chip-selected' : ''}`}>{label}</button>
-                  ))}
+                  {[['all','All'], ['mine','Mine'], ['community','Community'], ['others','Others'], ['unclaimed','Unclaimed']].map(([val,label]) => {
+                    const selected = Array.isArray(ownerFilter) ? (ownerFilter.length === 0 && val === 'all') || ownerFilter.includes(val) : ownerFilter === val
+                    return (
+                      <button key={val} onClick={() => onOwnerChange(val)} className={`btn ${selected ? 'chip-selected' : ''}`}>{label}</button>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -49,9 +52,14 @@ export default function HeroSearchFilters({
               <>
                 <div style={{marginTop:6, marginBottom:8, fontWeight:700}}>Filter by status</div>
                 <div className="filters-grid" style={{marginTop:6}}>
-                  {['All','Fresh','Soon','Expired','No expiration'].map(s => (
-                    <button key={s} onClick={() => onStatusChange(s)} className={`btn ${statusFilter===s ? 'chip-selected' : ''}`} style={{fontWeight:700}}>{s}</button>
-                  ))}
+                  {['All','Fresh','Soon','Expired','No expiration'].map(s => {
+                    const selected = Array.isArray(statusFilter)
+                      ? (statusFilter.length === 0 && s === 'All') || statusFilter.includes(s)
+                      : statusFilter === s
+                    return (
+                      <button key={s} onClick={() => onStatusChange(s)} className={`btn ${selected ? 'chip-selected' : ''}`} style={{fontWeight:700}}>{s}</button>
+                    )
+                  })}
                 </div>
               </>
             )}

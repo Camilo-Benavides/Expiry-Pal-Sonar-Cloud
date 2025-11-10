@@ -4,6 +4,8 @@ import Topbar from '../components/navigation/Topbar'
 import GroupCard from '../components/ui/GroupCard'
 import { recipes } from '../data/recipes'
 import HeroSearchFilters from '../components/ui/HeroSearchFilters'
+import DeviceFilter from '../components/ui/DeviceFilter'
+import { extractRecipeDevices, gatherDevicesFromList } from '../helpers/devices'
 import RecipeRow from '../components/ui/RecipeRow'
 import { suggestRecipes } from '../services/recipesService'
 import { mockProducts } from '../data/mockProducts'
@@ -11,6 +13,10 @@ import { mockProducts } from '../data/mockProducts'
 export default function Recipes(){
   const [q, setQ] = useState('')
   const [category, setCategory] = useState('All')
+  const [devicesList, setDevicesList] = useState([])
+  const [unavailableDevices, setUnavailableDevices] = useState(() => {
+    try{ const v = localStorage.getItem('ep_unavailableDevices'); return v ? JSON.parse(v) : [] }catch(e){ return [] }
+  })
   const [suggested, setSuggested] = useState([])
   const [allRecipes, setAllRecipes] = useState([]) 
   const [loadingSuggested, setLoadingSuggested] = useState(false)
@@ -51,7 +57,6 @@ export default function Recipes(){
         }
         const cleanName = (n) => {
           if (!n) return ''
-          // remove parenthetical content and punctuation, normalize whitespace and lowercase
           let s = String(n).toLowerCase().replace(/\([^)]*\)/g, '')
           s = s.replace(/[\.,;:\!\?]/g, '')
           s = s.replace(/\s+/g, ' ').trim()
@@ -64,7 +69,6 @@ export default function Recipes(){
           if (mounted) setSuggested([])
           return
         }
-        // Try session cache first (sessionStorage so data lives only during the browsing session)
         let itemsFromCache = null
         try{
           const cacheRaw = sessionStorage.getItem('ep_recipe_suggestions')
@@ -80,14 +84,8 @@ export default function Recipes(){
 
         let res = itemsFromCache
         if (!res){
-            // Request more candidates from backend so we can provide larger 'Suggested' and 'All' lists.
-            // Backend caps the number to a safe maximum (default configured in server).
-          // ask backend for up to 30 candidates and request full details for all 30
-          // (backend will cap and may cache results; storing full details server-side
-          // avoids further client calls when opening a recipe)
           res = await suggestRecipes(ingredientNames, 30, 30)
           console.debug('suggestRecipes result', res)
-          // store in session for this browsing session to avoid repeated calls
           try{
             const payload = { ingredients: ingredientNames, items: res }
             sessionStorage.setItem('ep_recipe_suggestions', JSON.stringify(payload))
@@ -98,7 +96,7 @@ export default function Recipes(){
 
         if (!mounted) return
 
-        // Normalize recipes and compute availability/ratio based on fridge ingredients
+  // Normalize recipes and compute availability/ratio based on fridge ingredients
         const fridgeSet = new Set(ingredientNames.map(x=>String(x).toLowerCase()))
         const normalized = (res || []).map(r => {
           // Extract ingredient names from common Spoonacular shapes or custom shape
@@ -106,7 +104,6 @@ export default function Recipes(){
                         : Array.isArray(r.extendedIngredients) ? r.extendedIngredients.map(i=>i.name)
                         : Array.isArray(r.usedIngredients) ? r.usedIngredients.map(i=>i.name)
                         : []
-          // Create a lightweight array for UI display (preserves full r.ingredients if backend returned amounts)
           const displayIngredients = names.map(n => {
             const cn = cleanName(n)
             return { name: n, available: fridgeSet.has(cn) }
@@ -114,12 +111,21 @@ export default function Recipes(){
           const total = displayIngredients.length
           const available = displayIngredients.filter(i=>i.available).length
           const ratio = total === 0 ? 0 : available/total
-          // Keep the original r.ingredients (which may include amount/unit/original) and add displayIngredients for the UI
-          return { ...r, displayIngredients, _availableCount: available, _totalCount: total, _ratio: ratio }
+          // extract required devices for this recipe (e.g., pot, stand mixer)
+          const requiredDevices = extractRecipeDevices(r)
+          return { ...r, displayIngredients, _availableCount: available, _totalCount: total, _ratio: ratio, requiredDevices }
         })
 
-        // Apply UI filters before splitting groups
-        const afterFilter = normalized.filter(r => matches(r) && (category === 'All' || (r.tags || []).includes(category)))
+  const allDevices = gatherDevicesFromList(normalized)
+  const unavailableSet = new Set((unavailableDevices || []).map(x=>String(x)))
+        const afterFilter = normalized.filter(r => {
+          if (!matches(r)) return false
+          if (category && category !== 'All' && !((r.tags || []).includes(category))) return false
+          if (Array.isArray(r.requiredDevices) && r.requiredDevices.length > 0){
+            for (const d of r.requiredDevices){ if (unavailableSet.has(d)) return false }
+          }
+          return true
+        })
 
         // Split into suggested (> 0.5) and candidates (<= 0.5)
         let suggestedList = afterFilter.filter(r => r._ratio > 0.5).sort((a,b) => b._availableCount - a._availableCount || b._ratio - a._ratio)
@@ -138,7 +144,7 @@ export default function Recipes(){
           allList = candidates.slice(0, 20)
         }
 
-        // If backend returned nothing and there is no suggestion, fallback to static recipes
+  // If backend returned nothing and there is no suggestion, fallback to static recipes
         if ((!afterFilter || afterFilter.length === 0) && ingredientNames.length > 0){
           console.debug('No suggestions from backend or none matched filters, falling back to static recipes')
           const fallbackSuggested = recipes.map(r => {
@@ -153,6 +159,8 @@ export default function Recipes(){
           setSuggested(suggestedList)
           setAllRecipes(allList)
         }
+  // expose device list into state so DeviceFilter can render (keeps UI reactive)
+  try{ setDevicesList(allDevices) }catch(e){}
       }catch(err){
         console.error('suggest fetch error', err)
         if (mounted) setSuggestError(err?.message || String(err))
@@ -160,7 +168,11 @@ export default function Recipes(){
     }
     load()
     return ()=>{ mounted = false }
-  }, [q, category, location.key])
+  }, [q, category, location.key, unavailableDevices])
+
+  const onDevicesChange = (arr) => {
+    setUnavailableDevices(arr || [])
+  }
 
   const [openSuggested, setOpenSuggested] = useState(true)
   const [openAll, setOpenAll] = useState(false)
@@ -170,14 +182,62 @@ export default function Recipes(){
       <div className="hero-banner desktop-only">
         <Topbar active="recipes" />
         <div style={{padding:0}}>
-          <HeroSearchFilters
-            query={q}
-            onQueryChange={setQ}
-            categories={categories}
-            category={category}
-            onCategoryChange={setCategory}
-            placeholder="Search recipes (name, tag)"
-          />
+          <div style={{marginBottom:12}}>
+            <HeroSearchFilters
+              query={q}
+              onQueryChange={setQ}
+              placeholder="Search recipes (name, tag)"
+            />
+          </div>
+
+          {/* Device filter*/}
+          {devicesList && devicesList.length > 0 ? (
+            <div style={{marginTop:12, display:'flex', justifyContent:'center'}}>
+              <div className="card" style={{maxWidth:1100, width:'100%', padding:12}}>
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap'}}>
+                  <div style={{flex:'0 0 auto'}}>
+                    <DeviceFilter devices={devicesList} unavailable={unavailableDevices} onChange={onDevicesChange} />
+                  </div>
+
+                  <div style={{flex:'1 1 auto', display:'flex', justifyContent:'center'}}>
+                    <div className="filters-grid" style={{justifyContent:'flex-start', display:'flex', gap:8, flexWrap:'wrap'}} aria-label="Filtro de categoría">
+                      {categories.map(c=> (
+                        <button key={c} className={`btn ${c===category ? 'chip-selected' : ''}`} onClick={()=>setCategory(c)} style={{borderRadius:12}}>{c}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Mobile layout */}
+      <div className="mobile-only">
+        <div style={{padding:10}}>
+          <div style={{marginBottom:8}}>
+            <HeroSearchFilters
+              query={q}
+              onQueryChange={setQ}
+              placeholder="Search recipes (name, tag)"
+            />
+          </div>
+
+          {devicesList && devicesList.length > 0 ? (
+            <div style={{display:'flex', justifyContent:'center'}}>
+              <div className="card" style={{width:'95%', padding:10}}>
+                <div style={{display:'flex', flexDirection:'column', gap:8}}>
+                  <DeviceFilter devices={devicesList} unavailable={unavailableDevices} onChange={onDevicesChange} />
+                  <div style={{display:'flex', gap:8, flexWrap:'wrap', paddingTop:6, justifyContent:'flex-start'}} aria-label="Filtro de categoría">
+                    {categories.map(c=> (
+                      <button key={c} className={`btn ${c===category ? 'chip-selected' : ''}`} onClick={()=>setCategory(c)} style={{borderRadius:12}}>{c}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
