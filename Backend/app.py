@@ -2,6 +2,7 @@
 ExpiryPalNext Backend - Main Application Entry Point
 """
 import sys
+from flask_wtf.csrf import CSRFProtect
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +47,8 @@ from src.models.items import create_item, list_items
 
 # Initialize Flask app
 app = Flask(__name__)
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 # NOTE: Swagger will be initialized after route registration so that all
 # endpoints (including blueprints) are picked up by the automatic spec.
