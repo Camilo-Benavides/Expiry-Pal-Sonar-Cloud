@@ -48,6 +48,8 @@ jobs:
           args: >
             -Dsonar.organization=integrationsonar
             -Dsonar.projectKey=Camilo-Benavides_Expiry-Pal-Sonar-Cloud
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
