@@ -36,10 +36,10 @@ class TestGetIngredientsFromRequest:
     @patch('src.routes.recipe_recomendation.get_recipes_by_ingredients')
     def test_no_ingredients_in_request(self, mock_get_recipes, client):
         """Test cuando no se envían ingredientes"""
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json={},
                               content_type='application/json')
-        
+
         assert response.status_code == 400
         data = json.loads(response.data)
         assert 'error' in data
@@ -60,7 +60,7 @@ class TestGetIngredientsFromRequest:
             'nutrition': {'nutrients': [{'name': 'Calories', 'amount': 200}]}
         }
         
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json={'ingredients': ['chicken', 'rice']},
                               content_type='application/json')
         
@@ -68,7 +68,7 @@ class TestGetIngredientsFromRequest:
     
     def test_empty_json_request(self, client):
         """Test con request JSON vacío"""
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json=None,
                               content_type='application/json')
         
@@ -79,7 +79,7 @@ class TestGetIngredientsFromRequest:
         """Test con parámetro number personalizado"""
         mock_get_recipes.return_value = []
         
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json={
                                   'ingredients': ['chicken'],
                                   'number': 10
@@ -93,7 +93,7 @@ class TestGetIngredientsFromRequest:
         """Test con parámetro number inválido"""
         mock_get_recipes.return_value = []
         
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json={
                                   'ingredients': ['chicken'],
                                   'number': 'invalid'
@@ -108,7 +108,7 @@ class TestGetIngredientsFromRequest:
         """Test con parámetro prefetch"""
         mock_get_recipes.return_value = []
         
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json={
                                   'ingredients': ['chicken'],
                                   'prefetch': 3
@@ -124,7 +124,7 @@ class TestGetIngredientsFromRequest:
         
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.dict(os.environ, {'EP_RECIPE_CACHE_DIR': tmpdir}):
-                response = client.post('/recipes/recommendations',
+                response = client.post('/recipes/suggest',
                                       json={'ingredients': ['chicken']},
                                       content_type='application/json')
                 
@@ -149,7 +149,7 @@ class TestRecipeEndpoints:
             {'id': 3, 'title': 'Recipe 3', 'usedIngredientCount': 3}
         ]
         
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json={'ingredients': ['chicken', 'rice', 'tomato']},
                               content_type='application/json')
         
@@ -166,12 +166,12 @@ class TestCacheManagement:
         mock_get_recipes.return_value = []
         
         # Primera llamada
-        response1 = client.post('/recipes/recommendations',
+        response1 = client.post('/recipes/suggest',
                                json={'ingredients': ['chicken', 'rice']},
                                content_type='application/json')
         
         # Segunda llamada con mismos ingredientes
-        response2 = client.post('/recipes/recommendations',
+        response2 = client.post('/recipes/suggest',
                                json={'ingredients': ['rice', 'chicken']},  # Orden diferente
                                content_type='application/json')
         
@@ -185,7 +185,7 @@ class TestCacheManagement:
         mock_get_recipes.return_value = []
         
         with patch.dict(os.environ, {'EP_RECIPE_CACHE_TTL': '7200'}):
-            response = client.post('/recipes/recommendations',
+            response = client.post('/recipes/suggest',
                                   json={'ingredients': ['chicken']},
                                   content_type='application/json')
             
@@ -201,7 +201,7 @@ class TestErrorHandling:
         # Simular error de API
         mock_get_recipes.return_value = ({'error': 'API Error'}, 502)
         
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               json={'ingredients': ['chicken']},
                               content_type='application/json')
         
@@ -210,7 +210,7 @@ class TestErrorHandling:
     
     def test_malformed_json(self, client):
         """Test con JSON malformado"""
-        response = client.post('/recipes/recommendations',
+        response = client.post('/recipes/suggest',
                               data='not a json',
                               content_type='application/json')
         
