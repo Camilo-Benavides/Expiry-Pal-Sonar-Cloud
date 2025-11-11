@@ -2,6 +2,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from .routes.recipe_recomendation import recipe_recommendation_bp
+from flask_wtf.csrf import CSRFProtect
 
 # Optional Firebase init and auth decorators
 # Use a dynamic loader to avoid static analysis/missing-import diagnostics in
@@ -53,6 +54,8 @@ init_firebase, require_auth, optional_auth = _load_optional_auth_and_firebase()
 
 def create_app():
     app = Flask(__name__)
+    csrf = CSRFProtect()
+    csrf.init_app(app)
     
     # Load configuration
     # Import Config directly so static analysis can resolve it
