@@ -4,6 +4,7 @@ Tests básicos para el modelo de usuarios usando patrón AAA
 """
 from unittest.mock import MagicMock, patch
 from werkzeug.security import generate_password_hash
+import secrets
 
 
 @patch('src.models.users.users_collection')
@@ -50,7 +51,7 @@ def test_authenticate_user_success(mock_collection):
     
     # Arrange
     email = "user@test.com"
-    password = "password123"
+    password = secrets.token_urlsafe(8)
     mock_collection.find_one.return_value = {
         "email": email,
         "name": "User",
